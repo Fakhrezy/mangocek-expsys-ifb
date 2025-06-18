@@ -1,70 +1,63 @@
-# Getting Started with Create React App
+# Mangocek APP
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+aplikasi sistem pakar untuk mendiagnosis penjakit tanaman mangga berdasarkan gejala-gejala yang terjadi beserta penanggulangannya.
 
-## Available Scripts
+## Cara menjalankan Aplikasi
 
-In the project directory, you can run:
+### Menyalakan Backend
 
-### `npm start`
+1. Masuk ke direktori backend:
+    ```bash
+    cd backend
+    ```
+2. Jalankan backend:
+    - Jika ingin ada perubahan otomatis:
+        ```bash
+        npx nodemon server.js
+        ```
+    - Atau tanpa perubahan otomatis:
+        ```bash
+        node server.js
+        ```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Menyalakan Aplikasi
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. Masuk ke direktori aplikasi:
+    ```bash
+    cd mangocek-app
+    ```
+2. Jalankan aplikasi:
+    ```bash
+    npm start
+    ```
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Screenshot
 
-### `npm run build`
+#### 1. Landing Page
+![Landing Page](sssispak/landingPage01.jpg)
+![Landing Page](sssispak/landingPage02.jpg)
+![Landing Page](sssispak/landingPage03.jpg)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+#### 2. Login / Register
+![Login Page](sssispak/login.jpg)
+![Register Page](sssispak/register.jpg)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### 3. Deteksi Page
+![Deteksi Page](sssispak/deteksiPage.jpg)
+![Deteksi Page](sssispak/deteksiPage002.jpg)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### 4. Pakar Page
+![Pakar Page](sssispak/pakarPage001.jpg)
+![Pakar Page](sssispak/pakarPage002.jpg)
 
-### `npm run eject`
+#### 5. Chatbot
+![Chatbot Page](sssispak/chatbot001.jpg)
+![Chatbot Page](sssispak/chatbot002.jpg)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+#### 5. Dashboard
+![Dashboard Page](sssispak/dashboardPage001.jpg)
+![Dashboard Page](sssispak/tabelUser.jpg)
+![Dashboard Page](sssispak/tabelDiagnosa.jpg)
+![Dashboard Page](sssispak/tabelPenyakit.jpg)
