@@ -213,14 +213,6 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// Ambil semua users
-app.get('/users', async (req, res) => {
-  const conn = await mysql.createConnection(dbConfig);
-  const [rows] = await conn.execute('SELECT id, username, email FROM users');
-  await conn.end();
-  res.json({ users: rows });
-});
-
 app.get('/hasil-diagnosa', async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
