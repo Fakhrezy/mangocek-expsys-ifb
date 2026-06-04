@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import API_BASE from '../config';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, CircularProgress, Alert, IconButton, TextField, TextareaAutosize,
@@ -19,7 +20,7 @@ export default function KnowledgeBaseTable() {
 
   const fetchData = () => {
     setLoading(true);
-    fetch('http://localhost:5000/knowledge-base')
+    fetch(`${API_BASE}/knowledge-base`)
       .then(res => res.json())
       .then(json => {
         setData(json);
@@ -37,7 +38,7 @@ export default function KnowledgeBaseTable() {
 
   const handleDelete = (id) => {
     if (!window.confirm('Yakin ingin menghapus penyakit ini?')) return;
-    fetch(`http://localhost:5000/penyakit/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE}/penyakit/${id}`, { method: 'DELETE' })
       .then(() => fetchData());
   };
 
@@ -51,7 +52,7 @@ export default function KnowledgeBaseTable() {
   };
 
   const handleSave = () => {
-    fetch(`http://localhost:5000/penyakit/${editId}`, {
+    fetch(`${API_BASE}/penyakit/${editId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editData)
@@ -71,7 +72,7 @@ export default function KnowledgeBaseTable() {
     };
 
     setTambahLoading(true);
-    fetch('http://localhost:5000/penyakit', {
+    fetch(`${API_BASE}/penyakit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

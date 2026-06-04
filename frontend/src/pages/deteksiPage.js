@@ -1,5 +1,5 @@
-// pages/DeteksiPage.js
 import { useState } from 'react';
+import API_BASE from '../config';
 
 export default function DeteksiPage() {
   const [image, setImage] = useState(null);
@@ -18,7 +18,7 @@ export default function DeteksiPage() {
     formData.append('image', file);
 
     try {
-      const res = await fetch('http://localhost:5000/predict', {
+      const res = await fetch(`${API_BASE}/predict`, {
         method: 'POST',
         body: formData
       });

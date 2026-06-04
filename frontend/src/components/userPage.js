@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import API_BASE from '../config';
 import {
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Typography,
@@ -9,7 +10,7 @@ const UsersPage = () => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/users')
+    axios.get(`${API_BASE}/users`)
       .then((res) => setUsers(res.data.users))
       .catch((err) => console.error('Gagal memuat data users:', err));
   }, []);

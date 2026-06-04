@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import API_BASE from '../config';
 
-const API_URL = 'http://localhost:5000/chatbot';
+const API_URL = `${API_BASE}/chatbot`;
 
 const ChatSVG = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

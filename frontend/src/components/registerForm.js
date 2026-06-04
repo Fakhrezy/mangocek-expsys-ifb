@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
+import API_BASE from '../config';
 
 export default function RegisterForm({ onClose }) {
   const [username, setUsername] = useState('');
@@ -10,7 +11,7 @@ export default function RegisterForm({ onClose }) {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/register', {
+      const response = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })

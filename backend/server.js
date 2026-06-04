@@ -8,6 +8,15 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// GCS — only initialized when GCS_BUCKET_NAME env var is set
+let gcsStorage = null;
+if (process.env.GCS_BUCKET_NAME) {
+  const { Storage } = require('@google-cloud/storage');
+  const opts = process.env.GCS_KEY_FILE ? { keyFilename: process.env.GCS_KEY_FILE } : {};
+  gcsStorage = new Storage(opts);
+  console.log(`☁️  GCS enabled — bucket: ${process.env.GCS_BUCKET_NAME}`);
+}
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const SYSTEM_PROMPT = `Kamu adalah MangoBot, asisten ahli pertanian khusus tanaman buah mangga.
@@ -123,6 +132,16 @@ app.post('/predict', upload.single('image'), (req, res) => {
       await conn.end();
     } catch (dbErr) {
       console.error('Gagal menyimpan log prediksi:', dbErr.message);
+    }
+
+    if (gcsStorage) {
+      try {
+        const bucket = gcsStorage.bucket(process.env.GCS_BUCKET_NAME);
+        const destName = `predictions/${Date.now()}_${namaFile}`;
+        await bucket.upload(imagePath, { destination: destName, metadata: { cacheControl: 'no-cache' } });
+      } catch (gcsErr) {
+        console.error('GCS upload gagal:', gcsErr.message);
+      }
     }
 
     res.json({ label: label.trim(), confidence: confidenceVal });

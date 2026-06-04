@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import API_BASE from '../config';
 
 
 export default function LoginForm({ onLoginSuccess, onClose }) {
@@ -13,7 +14,7 @@ export default function LoginForm({ onLoginSuccess, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const endpoint = isRegister ? 'http://localhost:5000/register' : 'http://localhost:5000/login';
+    const endpoint = isRegister ? `${API_BASE}/register` : `${API_BASE}/login`;
 
     try {
       const response = await fetch(endpoint, {

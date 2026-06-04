@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import KnowledgeBaseTable from '../components/knowledgeBaseTable';
+import API_BASE from '../config';
 
 // --- SVG Icons ---
 const IconCamera = () => (
@@ -113,7 +114,7 @@ function PrediksiPanel({ onNewLog }) {
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await fetch('http://localhost:5000/predict', { method: 'POST', body: formData });
+      const res = await fetch(`${API_BASE}/predict`, { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
         setResult({ ok: true, label: data.label, confidence: data.confidence });
@@ -178,7 +179,7 @@ function LogPrediksiTable({ refresh }) {
 
   const fetchData = () => {
     setLoading(true);
-    axios.get('http://localhost:5000/prediksi-log')
+    axios.get(`${API_BASE}/prediksi-log`)
       .then(res => { setRows(res.data || []); setLoading(false); })
       .catch(() => setLoading(false));
   };
@@ -236,14 +237,14 @@ function UsersTable({ users, loading, error }) {
   const handleEdit = (u) => { setEditId(u.id); setEditData({ username: u.username, email: u.email }); };
 
   const handleSave = async () => {
-    await axios.put(`http://localhost:5000/users/${editId}`, editData);
+    await axios.put(`${API_BASE}/users/${editId}`, editData);
     setRows(prev => prev.map(u => u.id === editId ? { ...u, ...editData } : u));
     setEditId(null);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Yakin ingin menghapus user ini?')) return;
-    await axios.delete(`http://localhost:5000/users/${id}`);
+    await axios.delete(`${API_BASE}/users/${id}`);
     setRows(prev => prev.filter(u => u.id !== id));
   };
 
@@ -285,11 +286,11 @@ export default function DashboardPage() {
   const [logRefresh, setLogRefresh] = useState(0);
 
   const fetchStats = () => {
-    axios.get('http://localhost:5000/users')
+    axios.get(`${API_BASE}/users`)
       .then(res => { setUsers(res.data.users || []); setLoadingUsers(false); })
       .catch(() => { setErrorUsers('Gagal memuat data pengguna'); setLoadingUsers(false); });
 
-    axios.get('http://localhost:5000/prediksi-log')
+    axios.get(`${API_BASE}/prediksi-log`)
       .then(res => setTotalPrediksi((res.data || []).length))
       .catch(() => {});
   };
