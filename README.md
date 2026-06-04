@@ -9,7 +9,7 @@ Aplikasi sistem pakar untuk mendiagnosis penyakit tanaman mangga berdasarkan gej
 
 ---
 
-## Struktur Proyek
+<!-- ## Struktur Proyek
 
 ```
 mangocek-app/
@@ -26,7 +26,7 @@ mangocek-app/
 ├── scripts/
 │   └── setup-ec2.sh        # script setup Ubuntu EC2
 ├── docker-compose.yml      # untuk lokal (development)
-└── docker-compose.prod.yml # untuk cloud (production)
+└── docker-compose.prod.yml # untuk cloud (production) -->
 ```
 
 ---
@@ -82,7 +82,7 @@ docker compose down -v
 
 ---
 
-## Deploy ke Cloud (AWS EC2 + GCP Cloud Storage)
+<!-- ## Deploy ke Cloud (AWS EC2 + GCP Cloud Storage)
 
 ### Arsitektur
 
@@ -202,7 +202,7 @@ docker compose -f docker-compose.prod.yml down
 | Port frontend | 3000 | 80 |
 | `restart: always` | tidak | ya |
 | GCS upload | opsional | opsional |
-| DB password | hardcoded | dari `.env` |
+| DB password | hardcoded | dari `.env` | -->
 
 ---
 
