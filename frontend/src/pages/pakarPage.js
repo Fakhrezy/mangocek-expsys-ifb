@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import knowledgeBase from '../data/knowledgeBase.json';
-import Chatbot from '../components/chatbot';
 
 export default function PakarPage() {
   const [selectedGejala, setSelectedGejala] = useState([]);
   const [hasil, setHasil] = useState([]);
   const [inputTeks, setInputTeks] = useState('');
-  const [chatbotOpen, setChatbotOpen] = useState(false);
   const [loading, setLoading] = useState(false);  // state loading
 
   const semuaGejala = [...new Set(
@@ -71,8 +69,6 @@ export default function PakarPage() {
     }, 1000); // simulasi delay proses 1 detik
   };
 
-  const toggleChatbot = () => setChatbotOpen(prev => !prev);
-
   return (
     <div style={styles.container}>
       <img src="/images/ill3.jpg" alt="Diagnosa" style={styles.gambar} />
@@ -115,15 +111,6 @@ export default function PakarPage() {
         </div>
       )}
 
-      <button onClick={toggleChatbot} style={styles.chatbotToggleBtn}>
-        {chatbotOpen ? 'Tutup Chatbot' : 'Chatbot'}
-      </button>
-
-      {chatbotOpen && (
-        <div style={styles.chatbotPopup}>
-          <Chatbot />
-        </div>
-      )}
     </div>
   );
 }
@@ -184,36 +171,6 @@ const styles = {
     borderRadius: '10px',
     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
     marginBottom: '20px',
-  },
-  chatbotToggleBtn: {
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    padding: '12px 20px',
-    fontSize: '16px',
-    backgroundColor: '#43a047',
-    color: 'white',
-    border: 'none',
-    borderRadius: '30px',
-    cursor: 'pointer',
-    zIndex: 1000,
-  },
-  chatbotPopup: {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)', // Posisikan di tengah layar
-    width: '500px', // Lebar yang lebih besar untuk chatbot
-    height: '600px', // Tinggi yang lebih besar untuk chatbot
-    border: '1px solid #ccc',
-    borderRadius: '15px',
-    backgroundColor: 'white',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-    zIndex: 1000,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'all 0.3s ease-in-out',
   },
 };
 

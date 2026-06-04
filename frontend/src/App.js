@@ -1,34 +1,25 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import InformasiPage from "./pages/informasiPage";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import DeteksiPage from "./pages/deteksiPage";
 import PakarPage from "./pages/pakarPage";
-import LoginPage from './pages/landingPage';
+import LandingPage from './pages/landingPage';
 import Navbar from "./components/navbar";
 import ProtectedRoute from "./components/protectedRoute";
 import DashboardPage from './pages/dashboardPage';
 import AdminRoute from './components/adminRoute';
-
+import FloatingChatbot from './components/chatbot';
 
 function AppWrapper() {
   const location = useLocation();
-
-  // Jika pathnya '/dashboard', jangan tampilkan Navbar
-  const showNavbar = location.pathname !== "/dashboard";
+  const hideNavbar = ['/dashboard', '/landing'].includes(location.pathname);
 
   return (
     <>
-      {showNavbar && <Navbar />}
+      {!hideNavbar && <Navbar />}
+      <FloatingChatbot />
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <InformasiPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/" element={<Navigate to="/landing" replace />} />
         <Route
           path="/deteksi"
           element={
@@ -46,15 +37,14 @@ function AppWrapper() {
           }
         />
         <Route
-  path="/dashboard"
-  element={
-    <AdminRoute>
-      <DashboardPage />
-    </AdminRoute>
-  }
-/>
-
-
+          path="/dashboard"
+          element={
+            <AdminRoute>
+              <DashboardPage />
+            </AdminRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/landing" replace />} />
       </Routes>
     </>
   );

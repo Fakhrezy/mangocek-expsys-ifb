@@ -13,7 +13,7 @@ export default function Navbar() {
 
   const onLoginSuccess = () => {
     closeLoginModal();
-    navigate("/");
+    navigate("/landing");
     window.location.reload();
   };
 
@@ -33,7 +33,7 @@ export default function Navbar() {
           showConfirmButton: false,
           timer: 1200,
         }).then(() => {
-          navigate("/");
+          navigate("/landing");
           window.location.reload();
         });
       }
@@ -43,11 +43,11 @@ export default function Navbar() {
   return (
     <>
       <nav style={styles.navbar}>
-        <Link to="/login">
+        <Link to="/landing">
           <img src="/images/navlogo.png" alt="Mangocek Logo" style={styles.logoImg} />
         </Link>
         <div style={styles.links}>
-          <Link to="/" style={styles.link}>Informasi</Link>
+          <Link to="/landing" style={styles.link}>Informasi</Link>
           <Link to="/deteksi" style={styles.link}>Deteksi</Link>
           <Link to="/pakar" style={styles.link}>Pakar</Link>
           {!isLoggedIn ? (

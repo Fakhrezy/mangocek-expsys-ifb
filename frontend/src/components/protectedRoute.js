@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children }) => {
         title: 'Anda harus login terlebih dahulu',
         confirmButtonText: 'OK',
       }).then(() => {
-        navigate('/login');
+        navigate('/landing');
       });
     }
   }, [isLoggedIn, navigate]);

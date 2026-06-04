@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -5,17 +6,38 @@ const mysql = require('mysql2/promise');
 const { execFile } = require('child_process');
 const path = require('path');
 const bodyParser = require('body-parser');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+const SYSTEM_PROMPT = `Kamu adalah MangoBot, asisten ahli pertanian khusus tanaman buah mangga.
+
+Kamu HANYA boleh menjawab pertanyaan yang berkaitan dengan topik berikut:
+- Penyakit tanaman mangga (antraknose, gleosporium, cendawan jelaga, bercak daun, dll)
+- Gejala dan diagnosis penyakit mangga
+- Hama yang menyerang tanaman mangga
+- Perawatan pohon mangga (penyiraman, pemupukan, pemangkasan)
+- Cara menanam dan budidaya mangga
+- Panen dan pasca panen buah mangga
+- Varietas dan jenis mangga
+- Kualitas buah mangga (masak, muda, busuk)
+- Pengendalian hama dan penyakit secara organik maupun kimia
+
+Jika pertanyaan di luar topik pertanian tanaman buah mangga, jawab HANYA dengan kalimat ini (jangan tambahkan apapun):
+"Maaf, saya hanya dapat membantu pertanyaan seputar pertanian tanaman buah mangga. Silakan tanyakan hal yang berkaitan dengan tanaman mangga 🥭"
+
+Gunakan Bahasa Indonesia yang ramah, jelas, dan mudah dipahami petani. Berikan jawaban yang praktis.`;
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Konfigurasi koneksi database
+// Konfigurasi koneksi database (support env vars untuk Docker)
 const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '', 
-  database: 'mangocek_db' 
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'mangocek_db'
 };
 
 // Upload konfigurasi dengan multer
@@ -74,23 +96,48 @@ app.post('/predict', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Gambar tidak ditemukan.' });
 
   const imagePath = path.resolve(req.file.path);
+  const namaFile = req.file.originalname || req.file.filename;
 
-  execFile('python3', ['predict.py', imagePath], (error, stdout, stderr) => {
+  execFile('python3', ['predict.py', imagePath], async (error, stdout, stderr) => {
     if (error) {
       console.error('Gagal menjalankan script Python:', error);
       return res.status(500).json({ error: 'Error saat prediksi gambar' });
     }
 
     const lines = stdout.trim().split('\n');
-    const resultLine = lines[lines.length - 1]; // Ambil baris terakhir
+    const resultLine = lines[lines.length - 1];
     const [label, confidence] = resultLine.trim().split(',');
 
     if (!label || isNaN(confidence)) {
       return res.status(500).json({ error: 'Output dari model tidak valid.' });
     }
 
-    res.json({ label, confidence: parseFloat(confidence) * 100 });
+    const confidenceVal = parseFloat(confidence) * 100;
+
+    try {
+      const conn = await mysql.createConnection(dbConfig);
+      await conn.execute(
+        'INSERT INTO prediksi_log (label, confidence, nama_file) VALUES (?, ?, ?)',
+        [label.trim(), confidenceVal, namaFile]
+      );
+      await conn.end();
+    } catch (dbErr) {
+      console.error('Gagal menyimpan log prediksi:', dbErr.message);
+    }
+
+    res.json({ label: label.trim(), confidence: confidenceVal });
   });
+});
+
+app.get('/prediksi-log', async (req, res) => {
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute('SELECT * FROM prediksi_log ORDER BY waktu DESC');
+    await conn.end();
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal mengambil log prediksi', error: err.message });
+  }
 });
 
 app.post('/simpan-diagnosa', async (req, res) => {
@@ -240,6 +287,25 @@ app.delete('/users/:id', async (req, res) => {
   res.json({ message: 'User dihapus' });
 });
 
+
+app.post('/chatbot', async (req, res) => {
+  const { message, history = [] } = req.body;
+  if (!message) return res.status(400).json({ error: 'Pesan tidak boleh kosong.' });
+
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: SYSTEM_PROMPT,
+    });
+
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(message);
+    res.json({ reply: result.response.text() });
+  } catch (err) {
+    console.error('Gemini error:', err.message);
+    res.status(500).json({ error: 'Gagal mendapatkan respons dari AI.' });
+  }
+});
 
 app.listen(5000, () => {
   console.log('✅ Server berjalan di http://localhost:5000');

@@ -1,213 +1,270 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-export default function ChatbotDiagnosa() {
-  const [messages, setMessages] = useState([]);
-  const [pertanyaanList, setPertanyaanList] = useState([]);
-  const [knowledgeBase, setKnowledgeBase] = useState([]);
-  const [gejalaTerpilih, setGejalaTerpilih] = useState([]);
-  const [pertanyaanIndex, setPertanyaanIndex] = useState(0);
-  const [diagnosa, setDiagnosa] = useState(null);
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
+const API_URL = 'http://localhost:5000/chatbot';
 
-  // Text-to-Speech dengan callback setelah selesai
-  const speak = (text, onEndCallback) => {
-    const synth = window.speechSynthesis;
-    synth.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voices = synth.getVoices();
-    const indoVoice =
-      voices.find((v) => v.lang === 'id-ID' && v.name.toLowerCase().includes('female')) ||
-      voices.find((v) => v.lang === 'id-ID') ||
-      voices.find((v) => v.lang.includes('id'));
-    if (indoVoice) utterance.voice = indoVoice;
-    utterance.rate = 1;
+const ChatSVG = () => (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+);
 
-    if (onEndCallback) {
-      utterance.onend = onEndCallback;
+const CloseSVG = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
+
+const SendSVG = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13"/>
+    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  </svg>
+);
+
+export default function FloatingChatbot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'model', text: 'Halo! Saya MangoBot 🥭, asisten ahli pertanian tanaman mangga. Silakan tanyakan apa saja seputar tanaman mangga, penyakit, perawatan, atau cara budidaya!' },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+
+  const buildHistory = () =>
+    messages.slice(1).map((m) => ({ role: m.role, parts: [{ text: m.text }] }));
+
+  const sendMessage = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    setMessages((prev) => [...prev, { role: 'user', text }]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history: buildHistory() }),
+      });
+      const data = await res.json();
+      setMessages((prev) => [...prev, { role: 'model', text: data.reply || data.error || 'Terjadi kesalahan.' }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'model', text: 'Gagal terhubung ke server. Coba lagi nanti.' }]);
+    } finally {
+      setLoading(false);
     }
-
-    synth.speak(utterance);
   };
 
-  // Ambil data pertanyaan dan knowledge base
-  useEffect(() => {
-    async function fetchData() {
-      const pertanyaanRes = await fetch('/pertanyaan.json');
-      const kbRes = await fetch('/knowledgeBase.json');
-      const pertanyaanData = await pertanyaanRes.json();
-      const kbData = await kbRes.json();
-      setPertanyaanList(pertanyaanData);
-      setKnowledgeBase(kbData.penyakit);
-    }
-    fetchData();
-  }, []);
-
-  // Fungsi diagnosa
-  const lakukanDiagnosa = useCallback(async () => {
-    const hasil = knowledgeBase
-      .map((penyakit) => {
-        const cocok = penyakit.gejala.filter((g) => gejalaTerpilih.includes(g.id));
-        const skor = cocok.length / penyakit.gejala.length;
-        return skor > 0 ? { nama: penyakit.nama, skor, gejala: cocok.map((g) => g.id) } : null;
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.skor - a.skor);
-
-    setDiagnosa(hasil);
-
-    if (hasil.length > 0) {
-      const top = hasil[0];
-      try {
-        await fetch('http://localhost:5000/simpan-diagnosa', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nama_penyakit: top.nama,
-            skor: top.skor,
-            gejala: top.gejala,
-          }),
-        });
-        console.log('✅ Diagnosa tersimpan.');
-      } catch (err) {
-        console.error('❌ Gagal simpan:', err);
-      }
-    }
-  }, [knowledgeBase, gejalaTerpilih]);
-
-  // Fungsi menjawab
-  const handleJawaban = useCallback(
-    (jawaban) => {
-      window.speechSynthesis.cancel();
-      const current = pertanyaanList[pertanyaanIndex];
-
-      setMessages((prev) => [
-        ...prev,
-        { text: current.pertanyaan, isUser: false },
-        { text: jawaban ? '✅ Ya' : '❌ Tidak', isUser: true },
-      ]);
-
-      if (jawaban) {
-        setGejalaTerpilih((prev) => [...prev, current.id]);
-      }
-
-      if (pertanyaanIndex + 1 < pertanyaanList.length) {
-        setPertanyaanIndex((prev) => prev + 1);
-      } else {
-        lakukanDiagnosa();
-      }
-    },
-    [pertanyaanIndex, pertanyaanList, lakukanDiagnosa]
-  );
-
-  // Konfigurasi speech recognition sekali saja
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('Browser tidak mendukung SpeechRecognition');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'id-ID';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-
-    recognition.onerror = (event) => {
-      console.error('❌ Error mic:', event.error);
-    };
-
-    recognition.onresult = (event) => {
-      const hasil = event.results[0][0].transcript.toLowerCase().trim();
-      console.log('🎤 Dengar:', hasil);
-      if (hasil.includes('ya')) {
-        handleJawaban(true);
-      } else if (hasil.includes('tidak')) {
-        handleJawaban(false);
-      }
-    };
-
-    recognitionRef.current = recognition;
-  }, [handleJawaban]);
-
-  // Trigger speak + start listening setelah selesai bicara
-  useEffect(() => {
-    if (pertanyaanList.length > 0 && pertanyaanIndex < pertanyaanList.length && !diagnosa) {
-      speak(pertanyaanList[pertanyaanIndex].pertanyaan, () => {
-        recognitionRef.current?.start(); // mulai mendengarkan setelah bicara selesai
-      });
-    }
-  }, [pertanyaanIndex, pertanyaanList, diagnosa]);
-
-  const ulangiPertanyaan = () => {
-    if (pertanyaanList.length > 0 && pertanyaanIndex < pertanyaanList.length) {
-      speak(pertanyaanList[pertanyaanIndex].pertanyaan, () => {
-        recognitionRef.current?.start();
-      });
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   return (
-    <div style={{ minHeight: '100vh', padding: '20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontFamily: 'Arial, sans-serif', backgroundColor: '#e8f5e9' }}>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px', border: '1px solid #c8e6c9', borderRadius: '8px', backgroundColor: '#ffffff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', maxHeight: '70vh' }}>
-        {messages.map((msg, index) => (
-          <div key={index} style={{ margin: '10px 0', textAlign: msg.isUser ? 'right' : 'left' }}>
-            <p style={{
-              margin: 0,
-              padding: '10px 14px',
-              backgroundColor: msg.isUser ? '#4caf50' : '#f1f8e9',
-              borderRadius: msg.isUser ? '18px 18px 0 18px' : '18px 18px 18px 0',
-              color: msg.isUser ? '#fff' : '#33691e',
-              display: 'inline-block',
-              maxWidth: '80%'
-            }}>
-              {msg.text}
-            </p>
+    <div style={styles.wrapper}>
+      {isOpen && (
+        <div style={styles.chatWindow}>
+          <div style={styles.header}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 24 }}>🥭</span>
+              <div>
+                <div style={styles.headerTitle}>MangoBot</div>
+                <div style={styles.headerSub}>Asisten Ahli Tanaman Mangga</div>
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)} style={styles.closeBtn}>
+              <CloseSVG />
+            </button>
           </div>
-        ))}
 
-        {diagnosa && (
-          <div style={{ marginTop: '20px', backgroundColor: '#fce4ec', padding: '15px', borderRadius: '10px' }}>
-            <h4 style={{ marginBottom: '10px', color: '#ad1457' }}>🩺 Hasil Diagnosa:</h4>
-            {diagnosa.map((d, i) => (
-              <p key={i} style={{ margin: '6px 0' }}>🔹 {d.nama} — <strong>{Math.round(d.skor * 100)}%</strong></p>
+          <div style={styles.chatArea}>
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
+                {msg.role === 'model' && <div style={styles.avatar}>🥭</div>}
+                <div style={msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot}>
+                  {msg.text.split('\n').map((line, j, arr) => (
+                    <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
+                  ))}
+                </div>
+              </div>
             ))}
+            {loading && (
+              <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
+                <div style={styles.avatar}>🥭</div>
+                <div style={{ ...styles.bubbleBot, ...styles.typing }}>
+                  <span>.</span><span>.</span><span>.</span>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
           </div>
-        )}
-      </div>
 
-      {!diagnosa && pertanyaanList.length > 0 && pertanyaanIndex < pertanyaanList.length && (
-        <div style={{ marginTop: '20px', textAlign: 'center', paddingBottom: '200px' }}>
-          <h4 style={{ color: '#2e7d32' }}>Pertanyaan:</h4>
-          <p style={{ fontSize: '18px', fontWeight: '500' }}>{pertanyaanList[pertanyaanIndex].pertanyaan}</p>
-          <p style={{ fontSize: '14px', color: '#777' }}>
-            jawab dengan suara: ucapkan <strong>"ya"</strong> atau <strong>"tidak"</strong>
-          </p>
-          <p style={{ fontSize: '14px', color: '#777' }}>
-            atau klik tombol di bawah ini untuk menjawab
-          </p>
-          <div style={{ marginTop: '10px' }}>
-            <button onClick={() => handleJawaban(true)} style={buttonStyle('#43a047')}>Ya</button>
-            <button onClick={() => handleJawaban(false)} style={buttonStyle('#e53935')}>Tidak</button>
-            <button onClick={ulangiPertanyaan} style={buttonStyle('#039be5')}>🔁 Ulangi</button>
+          <div style={styles.inputArea}>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Tanyakan seputar tanaman mangga... (Enter kirim)"
+              style={styles.textarea}
+              rows={2}
+              disabled={loading}
+            />
+            <button onClick={sendMessage} disabled={loading || !input.trim()} style={styles.sendBtn}>
+              <SendSVG />
+            </button>
           </div>
-          {isListening && <p style={{ marginTop: '10px', color: '#888' }}> Mendengarkan...</p>}
         </div>
       )}
+
+      <button onClick={() => setIsOpen((prev) => !prev)} style={styles.fab} title="MangoBot">
+        <ChatSVG />
+      </button>
     </div>
   );
 }
 
-const buttonStyle = (bg) => ({
-  padding: '10px 20px',
-  marginRight: '10px',
-  backgroundColor: bg,
-  color: '#fff',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  fontSize: '16px',
-});
+const styles = {
+  wrapper: {
+    position: 'fixed',
+    bottom: 24,
+    right: 24,
+    zIndex: 9999,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 12,
+  },
+  chatWindow: {
+    width: 360,
+    height: 520,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    fontFamily: 'Arial, sans-serif',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '14px 16px',
+    backgroundColor: '#2e7d32',
+    color: '#fff',
+    flexShrink: 0,
+  },
+  headerTitle: { fontSize: 15, fontWeight: 'bold' },
+  headerSub: { fontSize: 11, opacity: 0.85 },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#fff',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    padding: 4,
+    borderRadius: 6,
+    opacity: 0.85,
+  },
+  chatArea: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '14px 12px',
+    backgroundColor: '#f1f8e9',
+    minHeight: 0,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    backgroundColor: '#c8e6c9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 16,
+    marginRight: 8,
+    flexShrink: 0,
+  },
+  bubbleUser: {
+    maxWidth: '72%',
+    backgroundColor: '#2e7d32',
+    color: '#fff',
+    padding: '9px 13px',
+    borderRadius: '18px 18px 0 18px',
+    fontSize: 13,
+    lineHeight: 1.5,
+    wordBreak: 'break-word',
+  },
+  bubbleBot: {
+    maxWidth: '72%',
+    backgroundColor: '#fff',
+    color: '#1b5e20',
+    padding: '9px 13px',
+    borderRadius: '18px 18px 18px 0',
+    fontSize: 13,
+    lineHeight: 1.5,
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    wordBreak: 'break-word',
+  },
+  typing: {
+    letterSpacing: 4,
+    fontSize: 20,
+    color: '#81c784',
+  },
+  inputArea: {
+    display: 'flex',
+    gap: 8,
+    padding: '10px 12px',
+    backgroundColor: '#fff',
+    borderTop: '1px solid #e8f5e9',
+    alignItems: 'flex-end',
+    flexShrink: 0,
+  },
+  textarea: {
+    flex: 1,
+    resize: 'none',
+    border: '1.5px solid #c8e6c9',
+    borderRadius: 10,
+    padding: '8px 12px',
+    fontSize: 13,
+    outline: 'none',
+    fontFamily: 'Arial, sans-serif',
+    lineHeight: 1.5,
+  },
+  sendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    backgroundColor: '#2e7d32',
+    color: '#fff',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: '50%',
+    backgroundColor: '#2e7d32',
+    color: '#fff',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 16px rgba(46,125,50,0.4)',
+    transition: 'transform 0.15s ease',
+  },
+};
