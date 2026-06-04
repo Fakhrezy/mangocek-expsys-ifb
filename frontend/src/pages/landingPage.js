@@ -63,8 +63,6 @@ export default function LandingPage() {
         <p style={styles.sectionText}>
           Mangocek adalah sistem pakar yang dirancang untuk membantu petani dan pengguna
           dalam mendiagnosis penyakit pada tanaman mangga secara cepat dan akurat.
-          Aplikasi ini menggunakan metode forward chaining untuk mencocokkan gejala dan
-          memberikan diagnosis serta solusi penanganan.
         </p>
       </div>
 

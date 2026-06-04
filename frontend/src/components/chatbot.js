@@ -23,6 +23,13 @@ const SendSVG = () => (
   </svg>
 );
 
+const MangoSVG = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+  </svg>
+);
+
 export default function FloatingChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -75,7 +82,7 @@ export default function FloatingChatbot() {
         <div style={styles.chatWindow}>
           <div style={styles.header}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 24 }}>🥭</span>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MangoSVG /></div>
               <div>
                 <div style={styles.headerTitle}>MangoBot</div>
                 <div style={styles.headerSub}>Asisten Ahli Tanaman Mangga</div>
@@ -89,7 +96,7 @@ export default function FloatingChatbot() {
           <div style={styles.chatArea}>
             {messages.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
-                {msg.role === 'model' && <div style={styles.avatar}>🥭</div>}
+                {msg.role === 'model' && <div style={styles.avatar}><MangoSVG /></div>}
                 <div style={msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot}>
                   {msg.text.split('\n').map((line, j, arr) => (
                     <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
@@ -99,7 +106,7 @@ export default function FloatingChatbot() {
             ))}
             {loading && (
               <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
-                <div style={styles.avatar}>🥭</div>
+                <div style={styles.avatar}><MangoSVG /></div>
                 <div style={{ ...styles.bubbleBot, ...styles.typing }}>
                   <span>.</span><span>.</span><span>.</span>
                 </div>

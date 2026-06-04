@@ -4,6 +4,10 @@ import Swal from 'sweetalert2';
 import KnowledgeBaseTable from '../components/knowledgeBaseTable';
 import API_BASE from '../config';
 
+const spinStyle = document.createElement('style');
+spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(spinStyle);
+
 // --- SVG Icons ---
 const IconCamera = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -58,6 +62,40 @@ const IconStat = (color) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
     <line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+const IconWarning = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+const IconRefresh = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10"/>
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+  </svg>
+);
+
+const IconLoading = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+    <line x1="12" y1="2" x2="12" y2="6"/>
+    <line x1="12" y1="18" x2="12" y2="22"/>
+    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+    <line x1="2" y1="12" x2="6" y2="12"/>
+    <line x1="18" y1="12" x2="22" y2="12"/>
+    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
   </svg>
 );
 
@@ -133,7 +171,7 @@ function PrediksiPanel({ onNewLog }) {
     <div style={{ maxWidth: 560 }}>
       <div style={{ backgroundColor: 'white', borderRadius: 12, padding: 32, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
         <p style={{ color: '#555', marginTop: 0, marginBottom: 20 }}>
-          Upload foto buah mangga untuk mendeteksi kualitasnya menggunakan model CNN.
+          Upload foto buah mangga untuk mendeteksi kualitas.
         </p>
 
         <label htmlFor="upload-predict" style={{ display: 'block', border: '2px dashed #a5d6a7', borderRadius: 12, padding: 32, textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fdf9', marginBottom: 20 }}>
@@ -153,17 +191,21 @@ function PrediksiPanel({ onNewLog }) {
           </label>
         )}
 
-        {loading && <p style={{ color: '#f57c00', textAlign: 'center', marginTop: 12 }}>⏳ Memproses gambar...</p>}
+        {loading && (
+          <p style={{ color: '#f57c00', textAlign: 'center', marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <IconLoading /> Memproses gambar...
+          </p>
+        )}
 
         {result && (
           <div style={{ padding: '16px 20px', borderRadius: 10, backgroundColor: result.ok ? '#e8f5e9' : '#ffebee', border: `1px solid ${result.ok ? '#a5d6a7' : '#ef9a9a'}`, marginTop: 8 }}>
             {result.ok ? (
               <>
-                <div style={{ fontWeight: 700, fontSize: 18, color: '#2e7d32' }}>✅ {result.label}</div>
+                <div style={{ fontWeight: 700, fontSize: 18, color: '#2e7d32', display: 'flex', alignItems: 'center', gap: 8 }}><IconCheck /> {result.label}</div>
                 <div style={{ color: '#555', marginTop: 4, fontSize: 14 }}>Tingkat kepercayaan: <strong>{result.confidence.toFixed(1)}%</strong></div>
               </>
             ) : (
-              <div style={{ color: '#c62828' }}>⚠️ {result.msg}</div>
+              <div style={{ color: '#c62828', display: 'flex', alignItems: 'center', gap: 8 }}><IconWarning /> {result.msg}</div>
             )}
           </div>
         )}
@@ -192,7 +234,7 @@ function LogPrediksiTable({ refresh }) {
     <div style={{ backgroundColor: 'white', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
       <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontWeight: 600, color: '#333' }}>Riwayat Prediksi</span>
-        <button onClick={fetchData} style={{ padding: '5px 14px', backgroundColor: '#f5f5f5', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>↻ Refresh</button>
+        <button onClick={fetchData} style={{ padding: '5px 14px', backgroundColor: '#f5f5f5', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconRefresh /> Refresh</button>
       </div>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>

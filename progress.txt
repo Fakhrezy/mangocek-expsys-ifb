@@ -1,4 +1,10 @@
 sudah
 1. docker
-2. integrasi AI
-3. 
+2. integrasi AI Service
+3. database
+
+belum
+1. CI/CD
+2. konfigurasi cloud compute (awsec2)
+3. konfigurasi cdn (awscloudfront)
+4. object storage (gcpcloudstorage)
