@@ -7,9 +7,9 @@ Aplikasi sistem pakar untuk mendiagnosis penyakit tanaman mangga berdasarkan gej
 - [Dokumentasi API](docs/API.md) — semua endpoint, format request/response, kode status
 - [Dokumentasi AI](docs/AI.md) — CNN model, MangoBot (Gemini), alur inferensi
 
----
+<!-- ---
 
-<!-- ## Struktur Proyek
+## Struktur Proyek
 
 ```
 mangocek-app/
@@ -26,10 +26,10 @@ mangocek-app/
 ├── scripts/
 │   └── setup-ec2.sh        # script setup Ubuntu EC2
 ├── docker-compose.yml      # untuk lokal (development)
-└── docker-compose.prod.yml # untuk cloud (production) -->
+└── docker-compose.prod.yml # untuk cloud (production)
 ```
 
----
+--- -->
 
 ## Menjalankan Secara Lokal (Docker)
 
