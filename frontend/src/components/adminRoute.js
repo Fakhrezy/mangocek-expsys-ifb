@@ -3,26 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const AdminRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  const user = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('authToken');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const isAuthorized = !!token && user?.role === 'admin';
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoggedIn || !user || user.role !== 'admin') {
+    if (!isAuthorized) {
       Swal.fire({
         icon: 'error',
         title: 'Akses ditolak',
         text: 'Hanya admin yang dapat mengakses halaman ini',
         confirmButtonText: 'Kembali',
       }).then(() => {
-        navigate('/login');
+        navigate('/landing');
       });
     }
-  }, [isLoggedIn, user, navigate]);
+  }, [isAuthorized, navigate]);
 
-  if (!isLoggedIn || !user || user.role !== 'admin') {
-    return null;
-  }
+  if (!isAuthorized) return null;
 
   return children;
 };

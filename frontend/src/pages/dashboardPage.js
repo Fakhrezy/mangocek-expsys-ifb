@@ -8,6 +8,8 @@ const spinStyle = document.createElement('style');
 spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
 document.head.appendChild(spinStyle);
 
+const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('authToken') || ''}` });
+
 // --- SVG Icons ---
 const IconCamera = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,7 +68,7 @@ const IconStat = (color) => (
 );
 
 const IconCheck = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12"/>
   </svg>
 );
@@ -99,10 +101,17 @@ const IconLoading = () => (
   </svg>
 );
 
+const IconDiagnosa = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+  </svg>
+);
+
 // --- Menu ---
 const MENU = [
   { key: 'prediksi',     label: 'Prediksi',     Icon: IconCamera },
   { key: 'log-prediksi', label: 'Log Prediksi',  Icon: IconLog },
+  { key: 'diagnosa',     label: 'Diagnosa',      Icon: IconDiagnosa },
   { key: 'penyakit',     label: 'Penyakit',      Icon: IconLeaf },
   { key: 'users',        label: 'Users',         Icon: IconUsers },
 ];
@@ -116,19 +125,21 @@ const btnRed   = { padding: '5px 12px', backgroundColor: '#c62828', color: 'whit
 const btnGreen = { marginRight: 6, padding: '5px 12px', backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 };
 const btnGray  = { padding: '5px 12px', backgroundColor: '#757575', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 };
 
-// --- Stats bar (always at top) ---
-function StatsBar({ totalUsers, totalPrediksi }) {
+// --- Stats bar ---
+function StatsBar({ stats }) {
   const cards = [
-    { label: 'Total Pengguna',  value: totalUsers,    color: '#2e7d32', bg: '#e8f5e9',  icon: <IconUsers /> },
-    { label: 'Total Prediksi',  value: totalPrediksi, color: '#1565c0', bg: '#e3f2fd',  icon: IconStat('#1565c0') },
+    { label: 'Total Pengguna',  value: stats.totalUsers,    color: '#2e7d32', bg: '#e8f5e9', icon: <IconUsers /> },
+    { label: 'Total Prediksi',  value: stats.totalPrediksi, color: '#1565c0', bg: '#e3f2fd', icon: IconStat('#1565c0') },
+    { label: 'Total Penyakit',  value: stats.totalPenyakit, color: '#6a1b9a', bg: '#f3e5f5', icon: <IconLeaf /> },
+    { label: 'Total Diagnosa',  value: stats.totalDiagnosa, color: '#e65100', bg: '#fff3e0', icon: <IconDiagnosa /> },
   ];
   return (
     <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
       {cards.map(({ label, value, color, bg, icon }) => (
-        <div key={label} style={{ flex: '1 1 180px', backgroundColor: 'white', borderRadius: 12, padding: '20px 24px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', borderLeft: `4px solid ${color}`, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div key={label} style={{ flex: '1 1 160px', backgroundColor: 'white', borderRadius: 12, padding: '20px 24px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', borderLeft: `4px solid ${color}`, display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ backgroundColor: bg, borderRadius: 10, padding: 10, color, flexShrink: 0 }}>{icon}</div>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 700, color, lineHeight: 1 }}>{value}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color, lineHeight: 1 }}>{value ?? '-'}</div>
             <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>{label}</div>
           </div>
         </div>
@@ -152,7 +163,11 @@ function PrediksiPanel({ onNewLog }) {
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await fetch(`${API_BASE}/predict`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_BASE}/predict`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken') || ''}` },
+        body: formData,
+      });
       const data = await res.json();
       if (res.ok) {
         setResult({ ok: true, label: data.label, confidence: data.confidence });
@@ -268,6 +283,58 @@ function LogPrediksiTable({ refresh }) {
   );
 }
 
+// --- Panel: Diagnosa ---
+function DiagnosaTable() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = () => {
+    setLoading(true);
+    axios.get(`${API_BASE}/hasil-diagnosa`)
+      .then(res => { setRows(res.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  if (loading) return <p>Memuat data...</p>;
+
+  return (
+    <div style={{ backgroundColor: 'white', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 600, color: '#333' }}>Riwayat Diagnosa Gejala</span>
+        <button onClick={fetchData} style={{ padding: '5px 14px', backgroundColor: '#f5f5f5', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconRefresh /> Refresh</button>
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ backgroundColor: '#f8f9fa' }}>
+            <th style={th}>No</th>
+            <th style={th}>Nama Penyakit</th>
+            <th style={th}>Skor</th>
+            <th style={th}>Waktu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length === 0
+            ? <tr><td colSpan={4} style={{ ...td, textAlign: 'center', color: '#aaa', padding: 40 }}>Belum ada data diagnosa</td></tr>
+            : rows.map((r, i) => (
+              <tr key={r.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ ...td, color: '#999' }}>{i + 1}</td>
+                <td style={td}>
+                  <span style={{ backgroundColor: '#fff3e0', color: '#e65100', padding: '3px 10px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                    {r.nama_penyakit || '-'}
+                  </span>
+                </td>
+                <td style={td}>{parseFloat(r.skor).toFixed(2)}</td>
+                <td style={td}>{new Date(r.waktu).toLocaleString('id-ID')}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // --- Panel: Users ---
 function UsersTable({ users, loading, error }) {
   const [rows, setRows] = useState(users);
@@ -279,14 +346,14 @@ function UsersTable({ users, loading, error }) {
   const handleEdit = (u) => { setEditId(u.id); setEditData({ username: u.username, email: u.email }); };
 
   const handleSave = async () => {
-    await axios.put(`${API_BASE}/users/${editId}`, editData);
+    await axios.put(`${API_BASE}/users/${editId}`, editData, { headers: authHeader() });
     setRows(prev => prev.map(u => u.id === editId ? { ...u, ...editData } : u));
     setEditId(null);
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Yakin ingin menghapus user ini?')) return;
-    await axios.delete(`${API_BASE}/users/${id}`);
+    await axios.delete(`${API_BASE}/users/${id}`, { headers: authHeader() });
     setRows(prev => prev.filter(u => u.id !== id));
   };
 
@@ -297,7 +364,7 @@ function UsersTable({ users, loading, error }) {
     <div style={{ backgroundColor: 'white', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead><tr style={{ backgroundColor: '#f8f9fa' }}>
-          <th style={th}>ID</th><th style={th}>Username</th><th style={th}>Email</th><th style={th}>Aksi</th>
+          <th style={th}>ID</th><th style={th}>Username</th><th style={th}>Email</th><th style={th}>Role</th><th style={th}>Aksi</th>
         </tr></thead>
         <tbody>
           {rows.map(u => (
@@ -305,6 +372,11 @@ function UsersTable({ users, loading, error }) {
               <td style={td}>{u.id}</td>
               <td style={td}>{editId === u.id ? <input value={editData.username} onChange={e => setEditData({ ...editData, username: e.target.value })} style={inputSt} /> : u.username}</td>
               <td style={td}>{editId === u.id ? <input value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} style={inputSt} /> : u.email}</td>
+              <td style={td}>
+                <span style={{ backgroundColor: u.role === 'admin' ? '#e8f5e9' : '#e3f2fd', color: u.role === 'admin' ? '#2e7d32' : '#1565c0', padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
+                  {u.role}
+                </span>
+              </td>
               <td style={td}>
                 {editId === u.id
                   ? <><button onClick={handleSave} style={btnGreen}>Simpan</button><button onClick={() => setEditId(null)} style={btnGray}>Batal</button></>
@@ -324,23 +396,26 @@ export default function DashboardPage() {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [errorUsers, setErrorUsers] = useState(null);
-  const [totalPrediksi, setTotalPrediksi] = useState(0);
+  const [stats, setStats] = useState({ totalUsers: 0, totalPrediksi: 0, totalPenyakit: 0, totalDiagnosa: 0 });
   const [logRefresh, setLogRefresh] = useState(0);
 
+  const adminUser = JSON.parse(localStorage.getItem('user') || '{}');
+
   const fetchStats = () => {
-    axios.get(`${API_BASE}/users`)
+    axios.get(`${API_BASE}/stats`, { headers: authHeader() })
+      .then(res => setStats(res.data))
+      .catch(() => {});
+
+    setLoadingUsers(true);
+    axios.get(`${API_BASE}/users`, { headers: authHeader() })
       .then(res => { setUsers(res.data.users || []); setLoadingUsers(false); })
       .catch(() => { setErrorUsers('Gagal memuat data pengguna'); setLoadingUsers(false); });
-
-    axios.get(`${API_BASE}/prediksi-log`)
-      .then(res => setTotalPrediksi((res.data || []).length))
-      .catch(() => {});
   };
 
   useEffect(() => { fetchStats(); }, []);
 
   const handleNewLog = () => {
-    setTotalPrediksi(p => p + 1);
+    setStats(s => ({ ...s, totalPrediksi: s.totalPrediksi + 1 }));
     setLogRefresh(r => r + 1);
   };
 
@@ -356,6 +431,7 @@ export default function DashboardPage() {
       if (result.isConfirmed) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
         window.location.href = '/landing';
       }
     });
@@ -365,6 +441,7 @@ export default function DashboardPage() {
     switch (activePage) {
       case 'prediksi':     return <PrediksiPanel onNewLog={handleNewLog} />;
       case 'log-prediksi': return <LogPrediksiTable refresh={logRefresh} />;
+      case 'diagnosa':     return <DiagnosaTable />;
       case 'penyakit':     return <KnowledgeBaseTable />;
       case 'users':        return <UsersTable users={users} loading={loadingUsers} error={errorUsers} />;
       default: return null;
@@ -374,9 +451,8 @@ export default function DashboardPage() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
 
-      {/* ── Sidebar (putih) ── */}
+      {/* ── Sidebar ── */}
       <aside style={{ width: 240, backgroundColor: '#fff', borderRight: '1px solid #e8e8e8', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh' }}>
-        {/* Brand */}
         <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/images/logo.png" alt="Logo" style={{ height: 40 }} onError={e => e.target.style.display = 'none'} />
           <div>
@@ -385,7 +461,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Nav */}
         <nav style={{ flex: 1, paddingTop: 8 }}>
           {MENU.map(({ key, label, Icon }) => {
             const active = activePage === key;
@@ -411,7 +486,6 @@ export default function DashboardPage() {
           })}
         </nav>
 
-        {/* Logout */}
         <div style={{ padding: '16px 20px', borderTop: '1px solid #f0f0f0' }}>
           <button
             onClick={handleLogout}
@@ -424,17 +498,20 @@ export default function DashboardPage() {
 
       {/* ── Main ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f5f7fa' }}>
-        {/* Top bar */}
         <header style={{ backgroundColor: 'white', padding: '0 28px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', flexShrink: 0 }}>
           <h1 style={{ margin: 0, fontSize: 19, color: '#1b5e20', fontWeight: 700 }}>
             {MENU.find(m => m.key === activePage)?.label}
           </h1>
-          <span style={{ fontSize: 13, color: '#aaa' }}>Admin</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2e7d32', fontWeight: 700, fontSize: 14 }}>
+              {(adminUser.username || 'A')[0].toUpperCase()}
+            </div>
+            <span style={{ fontSize: 13, color: '#555', fontWeight: 500 }}>{adminUser.username || 'Admin'}</span>
+          </div>
         </header>
 
-        {/* Content */}
         <main style={{ flex: 1, padding: 28, overflowY: 'auto' }}>
-          <StatsBar totalUsers={users.length} totalPrediksi={totalPrediksi} />
+          <StatsBar stats={stats} />
           {renderContent()}
         </main>
       </div>

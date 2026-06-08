@@ -41,11 +41,14 @@ mangocek-app/
 cp backend/.env.example backend/.env
 ```
 
-Edit `backend/.env` dan isi `GEMINI_API_KEY` dengan API key dari Google AI Studio:
+Edit `backend/.env` dan isi variabel berikut:
 
 ```
 GEMINI_API_KEY=isi_dengan_api_key_kamu
+JWT_SECRET=isi_dengan_string_acak_panjang
 ```
+
+`GEMINI_API_KEY` dari [Google AI Studio](https://aistudio.google.com/). `JWT_SECRET` bisa string acak apa saja (gunakan yang panjang dan unik di production).
 
 ### 2. Build dan jalankan
 
@@ -55,10 +58,11 @@ docker compose up --build
 
 > **Catatan:** Build pertama membutuhkan 10–20 menit karena mengunduh TensorFlow (~600 MB).
 
-| Service  | URL                   |
-|----------|-----------------------|
-| Aplikasi | http://localhost:3000 |
-| API      | http://localhost:5000 |
+| Service     | URL                   |
+|-------------|-----------------------|
+| Aplikasi    | http://localhost:3000 |
+| API         | http://localhost:5000 |
+| ML Service  | http://localhost:5001 (internal, tidak perlu diakses langsung) |
 
 Akun admin default:
 - Email: `admin@mangocek.com`
@@ -217,19 +221,28 @@ mysql -u root -p -e "CREATE DATABASE mangocek_db;"
 mysql -u root -p mangocek_db < database/init.sql
 ```
 
-### 2. Jalankan Backend
+### 2. Jalankan ML Service
+
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+ML service berjalan di `http://localhost:5001`.
+
+### 3. Jalankan Backend
 
 ```bash
 cd backend
 cp .env.example .env   # lalu edit sesuai konfigurasi MySQL lokal
 npm install
-pip install -r requirements.txt
-node server.js
+ML_SERVICE_URL=http://localhost:5001 node server.js
 ```
 
 Backend berjalan di `http://localhost:5000`.
 
-### 3. Jalankan Frontend
+### 4. Jalankan Frontend
 
 ```bash
 cd frontend

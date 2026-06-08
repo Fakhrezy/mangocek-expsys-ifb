@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const isLoggedIn = !!localStorage.getItem('authToken');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,10 +18,7 @@ const ProtectedRoute = ({ children }) => {
     }
   }, [isLoggedIn, navigate]);
 
-  if (!isLoggedIn) {
-    // Jangan render children kalau belum login
-    return null;
-  }
+  if (!isLoggedIn) return null;
 
   return children;
 };

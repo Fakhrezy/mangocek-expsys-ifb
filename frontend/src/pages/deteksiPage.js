@@ -58,6 +58,7 @@ export default function DeteksiPage() {
     try {
       const res = await fetch(`${API_BASE}/predict`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken') || ''}` },
         body: formData
       });
 

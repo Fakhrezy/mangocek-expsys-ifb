@@ -7,6 +7,11 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Save, Cancel, Add } from '@mui/icons-material';
 
+const authHeader = () => ({
+  'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
+  'Content-Type': 'application/json',
+});
+
 export default function KnowledgeBaseTable() {
   const [data, setData] = useState([]);
   const [editId, setEditId] = useState(null);
@@ -38,7 +43,7 @@ export default function KnowledgeBaseTable() {
 
   const handleDelete = (id) => {
     if (!window.confirm('Yakin ingin menghapus penyakit ini?')) return;
-    fetch(`${API_BASE}/penyakit/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE}/penyakit/${id}`, { method: 'DELETE', headers: authHeader() })
       .then(() => fetchData());
   };
 
@@ -54,7 +59,7 @@ export default function KnowledgeBaseTable() {
   const handleSave = () => {
     fetch(`${API_BASE}/penyakit/${editId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeader(),
       body: JSON.stringify(editData)
     }).then(() => {
       setEditId(null);
@@ -74,7 +79,7 @@ export default function KnowledgeBaseTable() {
     setTambahLoading(true);
     fetch(`${API_BASE}/penyakit`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeader(),
       body: JSON.stringify(payload)
     }).then(() => {
       setFormBaru({ nama: '', gejala: '', pengendalian: '' });

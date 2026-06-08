@@ -1,15 +1,22 @@
-import { useState } from 'react';
-import knowledgeBase from '../data/knowledgeBase.json';
+import { useState, useEffect } from 'react';
+import API_BASE from '../config';
 
 export default function PakarPage() {
+  const [knowledgeBase, setKnowledgeBase] = useState([]);
+  const [loadingKB, setLoadingKB] = useState(true);
   const [selectedGejala, setSelectedGejala] = useState([]);
   const [hasil, setHasil] = useState([]);
   const [inputTeks, setInputTeks] = useState('');
-  const [loading, setLoading] = useState(false);  // state loading
+  const [loading, setLoading] = useState(false);
 
-  const semuaGejala = [...new Set(
-    knowledgeBase.penyakit.flatMap(p => p.gejala)
-  )];
+  useEffect(() => {
+    fetch(`${API_BASE}/knowledge-base`)
+      .then(res => res.json())
+      .then(data => { setKnowledgeBase(Array.isArray(data) ? data : []); setLoadingKB(false); })
+      .catch(() => setLoadingKB(false));
+  }, []);
+
+  const semuaGejala = knowledgeBase.flatMap(p => p.gejala);
 
   const stemmerIndonesia = (word) => {
     return word
@@ -30,27 +37,27 @@ export default function PakarPage() {
     const allWords = [...new Set([...a, ...b])];
     const vecA = allWords.map(word => a.filter(w => w === word).length);
     const vecB = allWords.map(word => b.filter(w => w === word).length);
-
     const dotProduct = vecA.reduce((sum, val, i) => sum + val * vecB[i], 0);
     const magnitudeA = Math.sqrt(vecA.reduce((sum, val) => sum + val * val, 0));
     const magnitudeB = Math.sqrt(vecB.reduce((sum, val) => sum + val * val, 0));
-
     return magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
   };
 
-  const handleDiagnosa = () => {
-    const hasilDeteksi = knowledgeBase.penyakit.map(p => {
-      const cocok = p.gejala.filter(g => selectedGejala.includes(g.id));
+  // Terima gejalaIDs langsung agar tidak bergantung pada state yang belum terupdate
+  const handleDiagnosa = (gejalaIDs = selectedGejala) => {
+    const hasilDeteksi = knowledgeBase.map(p => {
+      const cocok = p.gejala.filter(g => gejalaIDs.includes(g.id));
       return { ...p, jumlahCocok: cocok.length };
     }).filter(p => p.jumlahCocok > 0);
 
     hasilDeteksi.sort((a, b) => b.jumlahCocok - a.jumlahCocok);
     setHasil(hasilDeteksi);
+    return hasilDeteksi;
   };
 
-  // Fungsi diagnosa NLP dengan loading animasi
   const handleDiagnosaNLP = () => {
-    setLoading(true);  // mulai loading
+    if (!inputTeks.trim()) return;
+    setLoading(true);
 
     setTimeout(() => {
       const tokenInput = tokenize(inputTeks);
@@ -63,11 +70,36 @@ export default function PakarPage() {
       const cocokIDs = cocokGejala.map(g => g.id);
       setSelectedGejala(cocokIDs);
 
-      handleDiagnosa();
+      // Kirim IDs langsung untuk menghindari bug state async
+      const hasilDeteksi = handleDiagnosa(cocokIDs);
 
-      setLoading(false); // selesai loading
-    }, 1000); // simulasi delay proses 1 detik
+      // Simpan hasil diagnosa teratas ke database
+      if (hasilDeteksi.length > 0) {
+        const top = hasilDeteksi[0];
+        const skor = top.gejala.length > 0 ? top.jumlahCocok / top.gejala.length : 0;
+        fetch(`${API_BASE}/simpan-diagnosa`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nama_penyakit: top.nama,
+            skor,
+            gejala: cocokGejala.map(g => g.deskripsi),
+          }),
+        }).catch(() => {});
+      }
+
+      setLoading(false);
+    }, 1000);
   };
+
+  if (loadingKB) {
+    return (
+      <div style={{ ...styles.container, textAlign: 'center', paddingTop: 80 }}>
+        <div style={styles.spinner} />
+        <p style={{ color: '#00796b', marginTop: 16 }}>Memuat basis data penyakit...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -79,13 +111,13 @@ export default function PakarPage() {
         placeholder="Tuliskan gejala tanaman mangga di sini..."
         value={inputTeks}
         onChange={(e) => setInputTeks(e.target.value)}
-        style={{ width: '100%', marginBottom: '20px', padding: '10px', fontSize: '14px' }}
+        style={{ width: '100%', marginBottom: '20px', padding: '10px', fontSize: '14px', boxSizing: 'border-box' }}
       />
 
       <button
         onClick={handleDiagnosaNLP}
         style={{ ...styles.button, backgroundColor: '#00796b' }}
-        disabled={loading}  // disable saat loading
+        disabled={loading || !inputTeks.trim()}
       >
         {loading ? 'Memproses...' : 'Diagnosa'}
       </button>
@@ -97,20 +129,25 @@ export default function PakarPage() {
         </div>
       )}
 
+      {!loading && hasil.length === 0 && inputTeks && selectedGejala.length === 0 && (
+        <p style={{ textAlign: 'center', color: '#888', marginTop: 20 }}>
+          Tidak ada gejala yang cocok ditemukan. Coba deskripsikan gejala lebih detail.
+        </p>
+      )}
+
       {hasil.length > 0 && (
         <div style={{ marginTop: '30px' }}>
           <h2 style={styles.resultTitle}>Hasil Diagnosa:</h2>
           {hasil.map(p => (
             <div key={p.id} style={styles.resultCard}>
               <h3>{p.nama}</h3>
-              <p><strong>Jumlah gejala cocok:</strong> {p.jumlahCocok}</p>
+              <p><strong>Jumlah gejala cocok:</strong> {p.jumlahCocok} dari {p.gejala.length}</p>
               <h4>Pengendalian:</h4>
               <ul>{p.pengendalian.map((t, i) => <li key={i}>{t}</li>)}</ul>
             </div>
           ))}
         </div>
       )}
-
     </div>
   );
 }
@@ -173,4 +210,3 @@ const styles = {
     marginBottom: '20px',
   },
 };
-

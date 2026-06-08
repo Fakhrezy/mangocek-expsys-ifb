@@ -39,7 +39,8 @@ export default function LoginForm({ onLoginSuccess, onClose }) {
           setIsRegister(false); // Kembali ke form login setelah register berhasil
         } else {
           localStorage.setItem('isLoggedIn', 'true');
-localStorage.setItem('user', JSON.stringify(result.user));
+          localStorage.setItem('user', JSON.stringify(result.user));
+          localStorage.setItem('authToken', result.token);
 
 Swal.fire({
   icon: 'success',

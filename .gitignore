@@ -28,6 +28,7 @@ backend/gcs-key.json
 # Claude Code context — tidak perlu di repo
 CLAUDE.md
 docs/SDD.md
+.claude/
 
 # upload folder — file sementara dari prediksi
 backend/uploads/
