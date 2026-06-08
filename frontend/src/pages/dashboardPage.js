@@ -101,17 +101,10 @@ const IconLoading = () => (
   </svg>
 );
 
-const IconDiagnosa = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-  </svg>
-);
-
 // --- Menu ---
 const MENU = [
   { key: 'prediksi',     label: 'Prediksi',     Icon: IconCamera },
   { key: 'log-prediksi', label: 'Log Prediksi',  Icon: IconLog },
-  { key: 'diagnosa',     label: 'Diagnosa',      Icon: IconDiagnosa },
   { key: 'penyakit',     label: 'Penyakit',      Icon: IconLeaf },
   { key: 'users',        label: 'Users',         Icon: IconUsers },
 ];
@@ -131,7 +124,6 @@ function StatsBar({ stats }) {
     { label: 'Total Pengguna',  value: stats.totalUsers,    color: '#2e7d32', bg: '#e8f5e9', icon: <IconUsers /> },
     { label: 'Total Prediksi',  value: stats.totalPrediksi, color: '#1565c0', bg: '#e3f2fd', icon: IconStat('#1565c0') },
     { label: 'Total Penyakit',  value: stats.totalPenyakit, color: '#6a1b9a', bg: '#f3e5f5', icon: <IconLeaf /> },
-    { label: 'Total Diagnosa',  value: stats.totalDiagnosa, color: '#e65100', bg: '#fff3e0', icon: <IconDiagnosa /> },
   ];
   return (
     <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -283,58 +275,6 @@ function LogPrediksiTable({ refresh }) {
   );
 }
 
-// --- Panel: Diagnosa ---
-function DiagnosaTable() {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = () => {
-    setLoading(true);
-    axios.get(`${API_BASE}/hasil-diagnosa`)
-      .then(res => { setRows(res.data || []); setLoading(false); })
-      .catch(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
-  if (loading) return <p>Memuat data...</p>;
-
-  return (
-    <div style={{ backgroundColor: 'white', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, color: '#333' }}>Riwayat Diagnosa Gejala</span>
-        <button onClick={fetchData} style={{ padding: '5px 14px', backgroundColor: '#f5f5f5', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconRefresh /> Refresh</button>
-      </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f8f9fa' }}>
-            <th style={th}>No</th>
-            <th style={th}>Nama Penyakit</th>
-            <th style={th}>Skor</th>
-            <th style={th}>Waktu</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0
-            ? <tr><td colSpan={4} style={{ ...td, textAlign: 'center', color: '#aaa', padding: 40 }}>Belum ada data diagnosa</td></tr>
-            : rows.map((r, i) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                <td style={{ ...td, color: '#999' }}>{i + 1}</td>
-                <td style={td}>
-                  <span style={{ backgroundColor: '#fff3e0', color: '#e65100', padding: '3px 10px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
-                    {r.nama_penyakit || '-'}
-                  </span>
-                </td>
-                <td style={td}>{parseFloat(r.skor).toFixed(2)}</td>
-                <td style={td}>{new Date(r.waktu).toLocaleString('id-ID')}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 // --- Panel: Users ---
 function UsersTable({ users, loading, error }) {
   const [rows, setRows] = useState(users);
@@ -396,7 +336,7 @@ export default function DashboardPage() {
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [errorUsers, setErrorUsers] = useState(null);
-  const [stats, setStats] = useState({ totalUsers: 0, totalPrediksi: 0, totalPenyakit: 0, totalDiagnosa: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalPrediksi: 0, totalPenyakit: 0 });
   const [logRefresh, setLogRefresh] = useState(0);
 
   const adminUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -441,7 +381,6 @@ export default function DashboardPage() {
     switch (activePage) {
       case 'prediksi':     return <PrediksiPanel onNewLog={handleNewLog} />;
       case 'log-prediksi': return <LogPrediksiTable refresh={logRefresh} />;
-      case 'diagnosa':     return <DiagnosaTable />;
       case 'penyakit':     return <KnowledgeBaseTable />;
       case 'users':        return <UsersTable users={users} loading={loadingUsers} error={errorUsers} />;
       default: return null;

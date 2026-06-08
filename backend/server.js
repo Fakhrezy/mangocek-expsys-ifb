@@ -225,36 +225,6 @@ app.get('/prediksi-log', async (req, res) => {
   }
 });
 
-// --- Diagnosa ---
-
-app.post('/simpan-diagnosa', async (req, res) => {
-  const { nama_penyakit, skor, gejala } = req.body;
-  const waktu = new Date();
-
-  try {
-    const conn = await mysql.createConnection(dbConfig);
-    await conn.execute(
-      'INSERT INTO hasil_diagnosa (nama_penyakit, skor, gejala_terpilih, waktu) VALUES (?, ?, ?, ?)',
-      [nama_penyakit, skor, JSON.stringify(gejala), waktu]
-    );
-    await conn.end();
-    res.status(200).json({ message: 'Diagnosa berhasil disimpan.' });
-  } catch (err) {
-    res.status(500).json({ message: 'Gagal menyimpan diagnosa', error: err.message });
-  }
-});
-
-app.get('/hasil-diagnosa', async (req, res) => {
-  try {
-    const conn = await mysql.createConnection(dbConfig);
-    const [rows] = await conn.execute('SELECT * FROM hasil_diagnosa ORDER BY waktu DESC');
-    await conn.end();
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ message: 'Gagal mengambil data diagnosa', error: err.message });
-  }
-});
-
 // --- Knowledge base (public) ---
 
 app.get('/knowledge-base', async (req, res) => {
@@ -377,9 +347,8 @@ app.get('/stats', requireAdmin, async (req, res) => {
     const [[{ totalUsers }]]    = await conn.execute('SELECT COUNT(*) as totalUsers FROM users');
     const [[{ totalPrediksi }]] = await conn.execute('SELECT COUNT(*) as totalPrediksi FROM prediksi_log');
     const [[{ totalPenyakit }]] = await conn.execute('SELECT COUNT(*) as totalPenyakit FROM penyakit');
-    const [[{ totalDiagnosa }]] = await conn.execute('SELECT COUNT(*) as totalDiagnosa FROM hasil_diagnosa');
     await conn.end();
-    res.json({ totalUsers, totalPrediksi, totalPenyakit, totalDiagnosa });
+    res.json({ totalUsers, totalPrediksi, totalPenyakit });
   } catch (err) {
     res.status(500).json({ message: 'Gagal mengambil statistik', error: err.message });
   }

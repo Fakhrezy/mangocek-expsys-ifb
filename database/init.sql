@@ -28,14 +28,6 @@ CREATE TABLE IF NOT EXISTS pengendalian (
   FOREIGN KEY (id_penyakit) REFERENCES penyakit(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS hasil_diagnosa (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  nama_penyakit VARCHAR(255),
-  skor FLOAT,
-  gejala_terpilih JSON,
-  waktu DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS prediksi_log (
   id INT AUTO_INCREMENT PRIMARY KEY,
   label VARCHAR(255) NOT NULL,

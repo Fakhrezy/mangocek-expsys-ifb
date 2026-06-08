@@ -73,21 +73,6 @@ export default function PakarPage() {
       // Kirim IDs langsung untuk menghindari bug state async
       const hasilDeteksi = handleDiagnosa(cocokIDs);
 
-      // Simpan hasil diagnosa teratas ke database
-      if (hasilDeteksi.length > 0) {
-        const top = hasilDeteksi[0];
-        const skor = top.gejala.length > 0 ? top.jumlahCocok / top.gejala.length : 0;
-        fetch(`${API_BASE}/simpan-diagnosa`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nama_penyakit: top.nama,
-            skor,
-            gejala: cocokGejala.map(g => g.deskripsi),
-          }),
-        }).catch(() => {});
-      }
-
       setLoading(false);
     }, 1000);
   };
