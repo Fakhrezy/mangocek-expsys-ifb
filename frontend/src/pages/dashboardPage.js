@@ -4,6 +4,8 @@ import Swal from 'sweetalert2';
 import KnowledgeBaseTable from '../components/knowledgeBaseTable';
 import API_BASE from '../config';
 
+const API_DIRECT = 'https://3.106.121.121/api';
+
 const spinStyle = document.createElement('style');
 spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
 document.head.appendChild(spinStyle);
@@ -155,7 +157,7 @@ function PrediksiPanel({ onNewLog }) {
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await fetch(`${API_BASE}/predict`, {
+      const res = await fetch(`${API_DIRECT}/predict`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('authToken') || ''}` },
         body: formData,
@@ -389,8 +391,6 @@ export default function DashboardPage() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-
-      {/* ── Sidebar ── */}
       <aside style={{ width: 240, backgroundColor: '#fff', borderRight: '1px solid #e8e8e8', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh' }}>
         <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/images/logo.png" alt="Logo" style={{ height: 40 }} onError={e => e.target.style.display = 'none'} />
@@ -435,7 +435,6 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f5f7fa' }}>
         <header style={{ backgroundColor: 'white', padding: '0 28px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', flexShrink: 0 }}>
           <h1 style={{ margin: 0, fontSize: 19, color: '#1b5e20', fontWeight: 700 }}>

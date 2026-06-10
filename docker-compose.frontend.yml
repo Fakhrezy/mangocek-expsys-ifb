@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mangocek_frontend
+    ports:
+      - "3000:80"
+    restart: always

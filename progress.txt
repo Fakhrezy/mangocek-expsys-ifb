@@ -19,4 +19,8 @@ endpoint: mangocek-db.c1oswygo2rol.ap-southeast-2.rds.amazonaws.com
 IP EC2
 frontend: 13.238.141.75 
 ai-service: 13.211.188.236
+ai-service private: 10.0.4.30
 backend: 3.106.121.121
+
+CDN
+domain: d38p2nmucs9we2.cloudfront.net

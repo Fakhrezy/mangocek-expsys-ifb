@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mangocek_db
+    environment:
+      MYSQL_ROOT_PASSWORD: mangocek_root
+      MYSQL_DATABASE: mangocek_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pmangocek_root"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mangocek_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mangocek_backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: mangocek_root
+      DB_NAME: mangocek_db
+      ML_SERVICE_URL: http://10.0.4.30:5001
+    volumes:
+      - uploads_data:/app/uploads
+      - ./backend/gcs-key.json:/app/gcs-key.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mangocek_net
+
+volumes:
+  mysql_data:
+  uploads_data:
+
+networks:
+  mangocek_net:
+    driver: bridge

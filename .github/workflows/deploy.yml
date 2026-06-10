@@ -43,13 +43,13 @@ jobs:
         run: |
           cd frontend
           npm install
-          CI=false REACT_APP_API_URL=http://3.106.121.121:5000 npm run build
+          CI=false REACT_APP_API_URL=https://d38p2nmucs9we2.cloudfront.net/api npm run build
           cd ..
           docker build -t mangocek-frontend -f frontend/Dockerfile frontend
           docker tag mangocek-frontend:latest ${{ steps.login-ecr.outputs.registry }}/mangocek-frontend:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/mangocek-frontend:latest
 
-      - name: Deploy to EC2
+      - name: Deploy to EC2 Backend
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -65,6 +65,7 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             DB_NAME=${{ secrets.DB_NAME }}
             GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
-            ML_SERVICE_URL=http://ml-service:5001
+            GCS_KEY_FILE=/app/gcs-key.json
+            ML_SERVICE_URL=http://10.0.4.30:5001
             EOF
-            docker compose up -d --build
+            docker compose -f docker-compose.backend.yml up -d --build

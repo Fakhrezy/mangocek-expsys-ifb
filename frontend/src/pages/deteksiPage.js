@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import API_BASE from '../config';
 
+const API_DIRECT = 'https://3.106.121.121/api';
+
 const IconCheck = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12"/>
@@ -56,7 +58,7 @@ export default function DeteksiPage() {
     formData.append('image', file);
 
     try {
-      const res = await fetch(`${API_BASE}/predict`, {
+      const res = await fetch(`${API_DIRECT}/predict`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('authToken') || ''}` },
         body: formData

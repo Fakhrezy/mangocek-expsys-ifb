@@ -43,6 +43,7 @@ Jika pertanyaan di luar topik pertanian tanaman buah mangga, jawab HANYA dengan 
 Gunakan Bahasa Indonesia yang ramah, jelas, dan mudah dipahami petani. Berikan jawaban yang praktis.`;
 
 const app = express();
+const router = express.Router();
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -81,7 +82,7 @@ const requireAdmin = (req, res, next) => {
 
 // --- Auth endpoints ---
 
-app.post('/register', async (req, res) => {
+router.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
   if (!username || !email || !password) {
     return res.status(400).json({ message: 'Semua field wajib diisi (username, email, password).' });
@@ -105,7 +106,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.post('/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ message: 'Email dan password diperlukan.' });
 
@@ -155,7 +156,7 @@ app.post('/login', async (req, res) => {
 
 // --- CNN Prediction ---
 
-app.post('/predict', authenticate, upload.single('image'), async (req, res) => {
+router.post('/predict', authenticate, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Gambar tidak ditemukan.' });
 
   const imagePath = path.resolve(req.file.path);
@@ -214,7 +215,7 @@ app.post('/predict', authenticate, upload.single('image'), async (req, res) => {
   res.json({ label, confidence: confidenceVal });
 });
 
-app.get('/prediksi-log', async (req, res) => {
+router.get('/prediksi-log', async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [rows] = await conn.execute('SELECT * FROM prediksi_log ORDER BY waktu DESC');
@@ -227,7 +228,7 @@ app.get('/prediksi-log', async (req, res) => {
 
 // --- Knowledge base (public) ---
 
-app.get('/knowledge-base', async (req, res) => {
+router.get('/knowledge-base', async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [penyakit] = await conn.execute('SELECT * FROM penyakit');
@@ -246,7 +247,7 @@ app.get('/knowledge-base', async (req, res) => {
 
 // --- Penyakit CRUD (admin only) ---
 
-app.post('/penyakit', requireAdmin, async (req, res) => {
+router.post('/penyakit', requireAdmin, async (req, res) => {
   const { nama, gejala, pengendalian } = req.body;
 
   try {
@@ -268,7 +269,7 @@ app.post('/penyakit', requireAdmin, async (req, res) => {
   }
 });
 
-app.put('/penyakit/:id', requireAdmin, async (req, res) => {
+router.put('/penyakit/:id', requireAdmin, async (req, res) => {
   const { nama, gejala, pengendalian } = req.body;
   const id = req.params.id;
 
@@ -292,7 +293,7 @@ app.put('/penyakit/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/penyakit/:id', requireAdmin, async (req, res) => {
+router.delete('/penyakit/:id', requireAdmin, async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     await conn.execute('DELETE FROM penyakit WHERE id = ?', [req.params.id]);
@@ -305,7 +306,7 @@ app.delete('/penyakit/:id', requireAdmin, async (req, res) => {
 
 // --- Users (admin only) ---
 
-app.get('/users', requireAdmin, async (req, res) => {
+router.get('/users', requireAdmin, async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [rows] = await conn.execute('SELECT id, username, email, role FROM users');
@@ -316,7 +317,7 @@ app.get('/users', requireAdmin, async (req, res) => {
   }
 });
 
-app.put('/users/:id', requireAdmin, async (req, res) => {
+router.put('/users/:id', requireAdmin, async (req, res) => {
   const { username, email } = req.body;
   try {
     const conn = await mysql.createConnection(dbConfig);
@@ -328,7 +329,7 @@ app.put('/users/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/users/:id', requireAdmin, async (req, res) => {
+router.delete('/users/:id', requireAdmin, async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     await conn.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
@@ -341,7 +342,7 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
 
 // --- Stats (admin only) ---
 
-app.get('/stats', requireAdmin, async (req, res) => {
+router.get('/stats', requireAdmin, async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [[{ totalUsers }]]    = await conn.execute('SELECT COUNT(*) as totalUsers FROM users');
@@ -356,7 +357,7 @@ app.get('/stats', requireAdmin, async (req, res) => {
 
 // --- Chatbot ---
 
-app.post('/chatbot', async (req, res) => {
+router.post('/chatbot', async (req, res) => {
   const { message, history = [] } = req.body;
   if (!message) return res.status(400).json({ error: 'Pesan tidak boleh kosong.' });
 
@@ -374,6 +375,7 @@ app.post('/chatbot', async (req, res) => {
     res.status(500).json({ error: 'Gagal mendapatkan respons dari AI.' });
   }
 });
+app.use('/api', router);
 
 app.listen(5000, () => {
   console.log('✅ Server berjalan di http://localhost:5000');
