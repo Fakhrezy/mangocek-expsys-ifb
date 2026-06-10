@@ -30,7 +30,7 @@ jobs:
       - name: Build React frontend
         working-directory: frontend
         run: |
-          npm ci
+          npm install
           REACT_APP_API_URL=http://3.106.121.121:5000 npm run build
 
       - name: Build and push Backend image
