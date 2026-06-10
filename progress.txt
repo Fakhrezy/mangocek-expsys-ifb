@@ -8,3 +8,15 @@ belum
 2. konfigurasi cloud compute (awsec2)
 3. konfigurasi cdn (awscloudfront)
 4. object storage (gcpcloudstorage)
+
+IAM:
+mangocek-admin (Mangocek@password)
+
+RDS
+admin (password-mangocek)
+endpoint: mangocek-db.c1oswygo2rol.ap-southeast-2.rds.amazonaws.com
+
+IP EC2
+frontend: 13.238.141.75 
+ai-service: 13.211.188.236
+backend: 3.106.121.121
