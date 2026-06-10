@@ -28,11 +28,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build React frontend
+        working-directory: frontend
         run: |
-          cd frontend
           npm ci
           REACT_APP_API_URL=http://3.106.121.121:5000 npm run build
-          cd ..
 
       - name: Build and push Backend image
         run: |
