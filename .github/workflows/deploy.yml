@@ -1,0 +1,67 @@
+name: CI/CD MangoCek
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Backend image
+        run: |
+          docker build -t mangocek-backend ./backend
+          docker tag mangocek-backend:latest ${{ steps.login-ecr.outputs.registry }}/mangocek-backend:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/mangocek-backend:latest
+
+      - name: Build and push ML Service image
+        run: |
+          docker build -f ./backend/Dockerfile.ml -t mangocek-ml ./backend
+          docker tag mangocek-ml:latest ${{ steps.login-ecr.outputs.registry }}/mangocek-ml:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/mangocek-ml:latest
+
+      - name: Build and push Frontend image
+        run: |
+          docker build -t mangocek-frontend ./frontend
+          docker tag mangocek-frontend:latest ${{ steps.login-ecr.outputs.registry }}/mangocek-frontend:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/mangocek-frontend:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/mangocek-expsys-ifb
+            git pull origin main
+            cat > backend/.env << EOF
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+            ML_SERVICE_URL=http://ml-service:5001
+            EOF
+            docker compose pull
+            docker compose up -d --build
