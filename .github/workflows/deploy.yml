@@ -27,6 +27,13 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Build React frontend
+        run: |
+          cd frontend
+          npm ci
+          REACT_APP_API_URL=http://3.106.121.121:5000 npm run build
+          cd ..
+
       - name: Build and push Backend image
         run: |
           docker build -t mangocek-backend ./backend
@@ -63,5 +70,4 @@ jobs:
             GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
             ML_SERVICE_URL=http://ml-service:5001
             EOF
-            docker compose pull
             docker compose up -d --build
