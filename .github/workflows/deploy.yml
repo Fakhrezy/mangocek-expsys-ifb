@@ -44,7 +44,8 @@ jobs:
           cd frontend
           npm install
           CI=false REACT_APP_API_URL=http://3.106.121.121:5000 npm run build
-          docker build -t mangocek-frontend .
+          cd ..
+          docker build -t mangocek-frontend -f frontend/Dockerfile frontend
           docker tag mangocek-frontend:latest ${{ steps.login-ecr.outputs.registry }}/mangocek-frontend:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/mangocek-frontend:latest
 
