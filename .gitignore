@@ -27,6 +27,7 @@ backend/gcs-key.json
 
 # Claude Code context — tidak perlu di repo
 CLAUDE.md
+progress.txt
 docs/SDD.md
 .claude/
 
